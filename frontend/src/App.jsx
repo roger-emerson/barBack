@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HardDrive, Server, Clock, Database, AlertCircle, CheckCircle, PlayCircle, StopCircle, RotateCcw, Settings, Activity } from 'lucide-react';
+import { HardDrive, Server, Clock, Database, AlertCircle, CheckCircle, PlayCircle, StopCircle, RotateCcw, Settings, Activity, ArrowLeft } from 'lucide-react';
 
 export default function RHELBackupSystem() {
   const [connectionConfig, setConnectionConfig] = useState({
@@ -248,6 +248,16 @@ export default function RHELBackupSystem() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
+            {isConnected && (
+              <button
+                onClick={() => setShowConfig(false)}
+                className="mb-4 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Dashboard
+              </button>
+            )}
+
             <div className="flex items-center gap-3 mb-6">
               <Server className="w-10 h-10 text-blue-400" />
               <div>
