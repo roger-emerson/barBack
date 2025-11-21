@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Server, LogIn, AlertCircle } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function LoginPage({ onLoginSuccess }) {
   const [credentials, setCredentials] = useState({
@@ -15,7 +16,7 @@ export default function LoginPage({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,7 +40,7 @@ export default function LoginPage({ onLoginSuccess }) {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:3001/api/auth/google';
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   return (

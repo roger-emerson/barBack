@@ -33,6 +33,12 @@ run:
 	@echo "Starting application..."
 	docker-compose up -d
 	@echo "✓ Application running at http://localhost:3000"
+	@echo ""
+	@echo "Default login credentials:"
+	@echo "  Username: admin"
+	@echo "  Password: password"
+	@echo ""
+	@echo "IMPORTANT: Change the default password after first login!"
 
 stop:
 	@echo "Stopping application..."

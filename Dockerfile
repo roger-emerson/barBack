@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --from=backend-builder --chown=appuser:appuser /app/backend ./
 COPY --from=frontend-builder --chown=appuser:appuser /app/frontend/dist ./public
 
-RUN mkdir -p /app/backups /app/logs && \
+RUN mkdir -p /app/backups /app/logs /app/data && \
     chown -R appuser:appuser /app
 
 USER appuser

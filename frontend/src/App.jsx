@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HardDrive, Server, Clock, Database, AlertCircle, CheckCircle, PlayCircle, StopCircle, RotateCcw, Settings, Activity, ArrowLeft, LogOut } from 'lucide-react';
 import LoginPage from './components/LoginPage';
 import UserManagement from './components/UserManagement';
+import { API_URL } from './config';
 
 export default function RHELBackupSystem() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,7 +59,7 @@ export default function RHELBackupSystem() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/check', {
+      const response = await fetch(`${API_URL}/api/auth/check`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -81,7 +82,7 @@ export default function RHELBackupSystem() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:3001/api/auth/logout', {
+      await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });

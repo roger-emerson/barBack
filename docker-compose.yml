@@ -9,14 +9,19 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3001"
-      - "3001:3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
       - LOG_LEVEL=info
+      - SESSION_SECRET=${SESSION_SECRET:-barback-secret-key-change-in-production}
+      - FRONTEND_URL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://localhost:3000/api/auth/google/callback}
     volumes:
       - backup-data:/app/backups
       - backup-logs:/app/logs
+      - user-data:/app/data
     networks:
       - backup-network
     healthcheck:
@@ -30,6 +35,8 @@ volumes:
   backup-data:
     driver: local
   backup-logs:
+    driver: local
+  user-data:
     driver: local
 
 networks:

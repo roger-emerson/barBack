@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Trash2, Edit2, X, Check, AlertCircle } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -19,7 +20,7 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/users', {
+      const response = await fetch(`${API_URL}/api/users`, {
         credentials: 'include'
       });
 
@@ -41,7 +42,7 @@ export default function UserManagement() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/users', {
+      const response = await fetch(`${API_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +70,7 @@ export default function UserManagement() {
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${editingUser.username}`, {
+      const response = await fetch(`${API_URL}/api/users/${editingUser.username}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ export default function UserManagement() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${username}`, {
+      const response = await fetch(`${API_URL}/api/users/${username}`, {
         method: 'DELETE',
         credentials: 'include'
       });
