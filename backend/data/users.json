@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "password": "$2b$10$iT5v9ukZyIHveY1efaNK8ujMILeGgkFLz/pqQ0TCLNOim/GYgUIQO",
+    "email": "",
+    "createdAt": "2025-11-21T19:04:28.996Z"
+  },
+  {
+    "id": "1763752039884",
+    "username": "testuser",
+    "password": "$2b$10$uhBDA5D0uYQdembCvelT6eiCwWupZzaDiwb1c8gEOPbdhJXGfAwD2",
+    "email": "test@example.com",
+    "createdAt": "2025-11-21T19:07:19.884Z"
+  }
+]

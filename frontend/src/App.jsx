@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { HardDrive, Server, Clock, Database, AlertCircle, CheckCircle, PlayCircle, StopCircle, RotateCcw, Settings, Activity, ArrowLeft } from 'lucide-react';
+import { HardDrive, Server, Clock, Database, AlertCircle, CheckCircle, PlayCircle, StopCircle, RotateCcw, Settings, Activity, ArrowLeft, LogOut } from 'lucide-react';
+import LoginPage from './components/LoginPage';
+import UserManagement from './components/UserManagement';
 
 export default function RHELBackupSystem() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [connectionConfig, setConnectionConfig] = useState({
     host: '',
     port: '22',
@@ -46,6 +51,48 @@ export default function RHELBackupSystem() {
     currentFile: '',
     phase: 'idle'
   });
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/check', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+        setCurrentUser(data.user);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLoginSuccess = (user) => {
+    setIsAuthenticated(true);
+    setCurrentUser(user);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:3001/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setIsConnected(false);
+      setShowConfig(true);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const handleConnect = async () => {
     if (!connectionConfig.host || !connectionConfig.username) {
@@ -243,28 +290,54 @@ export default function RHELBackupSystem() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   if (!isConnected || showConfig) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-6">
           <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
-            {isConnected && (
-              <button
-                onClick={() => setShowConfig(false)}
-                className="mb-4 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
-              </button>
-            )}
-
-            <div className="flex items-center gap-3 mb-6">
-              <Server className="w-10 h-10 text-blue-400" />
-              <div>
-                <h1 className="text-3xl font-bold text-white">barBack</h1>
-                <p className="text-slate-400">RHEL Backup System</p>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Server className="w-10 h-10 text-blue-400" />
+                <div>
+                  <h1 className="text-3xl font-bold text-white">barBack</h1>
+                  <p className="text-slate-400">RHEL Backup System</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {isConnected && (
+                  <button
+                    onClick={() => setShowConfig(false)}
+                    className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                  </button>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
               </div>
             </div>
+
+            <p className="text-slate-400 text-sm mb-4">
+              Logged in as: <span className="text-white font-medium">{currentUser?.username}</span>
+            </p>
             
             <div className="space-y-4">
               <div>
@@ -341,6 +414,8 @@ export default function RHELBackupSystem() {
               </button>
             </div>
           </div>
+
+          <UserManagement />
         </div>
       </div>
     );
@@ -354,17 +429,26 @@ export default function RHELBackupSystem() {
             <Server className="w-8 h-8 text-blue-400" />
             <div>
               <h1 className="text-2xl font-bold text-white">barBack Dashboard</h1>
-              <p className="text-slate-400">{systemInfo.hostname}</p>
+              <p className="text-slate-400">{systemInfo.hostname} • {currentUser?.username}</p>
             </div>
           </div>
-          
-          <button
-            onClick={() => setShowConfig(true)}
-            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            Configure
-          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowConfig(true)}
+              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Configure
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

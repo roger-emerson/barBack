@@ -3,9 +3,14 @@ import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
+import session from 'express-session';
 import SSHManager from './ssh-manager.js';
 import BackupManager from './backup-manager.js';
 import logger from './utils/logger.js';
+import passport from './auth/passport.js';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
+import userStore from './auth/userStore.js';
 
 dotenv.config();
 
@@ -15,9 +20,31 @@ const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static('public'));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'barback-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+await userStore.initialize();
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
@@ -39,7 +66,14 @@ function broadcast(data) {
   });
 }
 
-app.post('/api/connect', async (req, res) => {
+const requireAuthMiddleware = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: 'Authentication required' });
+};
+
+app.post('/api/connect', requireAuthMiddleware, async (req, res) => {
   try {
     const { host, port, username, password, privateKey } = req.body;
     const sessionId = `${host}-${Date.now()}`;
@@ -64,7 +98,7 @@ app.post('/api/connect', async (req, res) => {
   }
 });
 
-app.get('/api/system-info/:sessionId', async (req, res) => {
+app.get('/api/system-info/:sessionId', requireAuthMiddleware, async (req, res) => {
   try {
     const sshManager = sshManagers.get(req.params.sessionId);
     if (!sshManager) {
@@ -78,7 +112,7 @@ app.get('/api/system-info/:sessionId', async (req, res) => {
   }
 });
 
-app.post('/api/backup/start', async (req, res) => {
+app.post('/api/backup/start', requireAuthMiddleware, async (req, res) => {
   try {
     const { sessionId, backupPath, excludePaths } = req.body;
     const sshManager = sshManagers.get(sessionId);
@@ -116,7 +150,7 @@ app.post('/api/backup/start', async (req, res) => {
   }
 });
 
-app.post('/api/backup/stop/:sessionId', async (req, res) => {
+app.post('/api/backup/stop/:sessionId', requireAuthMiddleware, async (req, res) => {
   try {
     const backupManager = backupManagers.get(req.params.sessionId);
     if (backupManager) {
@@ -130,7 +164,7 @@ app.post('/api/backup/stop/:sessionId', async (req, res) => {
   }
 });
 
-app.get('/api/backups/:sessionId', async (req, res) => {
+app.get('/api/backups/:sessionId', requireAuthMiddleware, async (req, res) => {
   try {
     const sshManager = sshManagers.get(req.params.sessionId);
     if (!sshManager) {
@@ -144,7 +178,7 @@ app.get('/api/backups/:sessionId', async (req, res) => {
   }
 });
 
-app.post('/api/restore/start', async (req, res) => {
+app.post('/api/restore/start', requireAuthMiddleware, async (req, res) => {
   try {
     const { sessionId, backupId } = req.body;
     const sshManager = sshManagers.get(sessionId);
@@ -172,7 +206,7 @@ app.post('/api/restore/start', async (req, res) => {
   }
 });
 
-app.post('/api/disconnect/:sessionId', async (req, res) => {
+app.post('/api/disconnect/:sessionId', requireAuthMiddleware, async (req, res) => {
   try {
     const sshManager = sshManagers.get(req.params.sessionId);
     if (sshManager) {
