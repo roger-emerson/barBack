@@ -1,5 +1,5 @@
 import express from 'express';
-import passport from '../auth/passport.js';
+import passport, { googleAuthEnabled } from '../auth/passport.js';
 import userStore from '../auth/userStore.js';
 import { requireAuth } from '../auth/middleware.js';
 
@@ -32,16 +32,23 @@ router.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
-router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
-
-router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login?error=google' }),
-  (req, res) => {
-    res.redirect('/?login=success');
+router.get('/google', (req, res, next) => {
+  if (!googleAuthEnabled) {
+    return res.status(400).json({ error: 'Google authentication is not configured' });
   }
-);
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
+  })(req, res, next);
+});
+
+router.get('/google/callback', (req, res, next) => {
+  if (!googleAuthEnabled) {
+    return res.redirect('/?error=google-not-configured');
+  }
+  passport.authenticate('google', { failureRedirect: '/?error=google' })(req, res, next);
+}, (req, res) => {
+  res.redirect('/?login=success');
+});
 
 router.post('/logout', (req, res) => {
   req.logout((err) => {
@@ -76,6 +83,12 @@ router.get('/check', (req, res) => {
   } else {
     res.json({ authenticated: false });
   }
+});
+
+router.get('/config', (req, res) => {
+  res.json({
+    googleAuthEnabled
+  });
 });
 
 export default router;

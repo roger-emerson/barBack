@@ -6,6 +6,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -40,6 +41,7 @@ export default function UserManagement() {
   const handleAddUser = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     try {
       const response = await fetch(`${API_URL}/api/users`, {
@@ -54,9 +56,11 @@ export default function UserManagement() {
       const data = await response.json();
 
       if (response.ok) {
-        setUsers([...users, data.user]);
+        await loadUsers();
         setShowAddModal(false);
         setFormData({ username: '', password: '', email: '' });
+        setSuccess(`User "${data.user.username}" created successfully!`);
+        setTimeout(() => setSuccess(''), 5000);
       } else {
         setError(data.error || 'Failed to add user');
       }
@@ -68,6 +72,7 @@ export default function UserManagement() {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     try {
       const response = await fetch(`${API_URL}/api/users/${editingUser.username}`, {
@@ -85,9 +90,11 @@ export default function UserManagement() {
       const data = await response.json();
 
       if (response.ok) {
-        setUsers(users.map(u => u.username === editingUser.username ? data.user : u));
+        await loadUsers();
         setEditingUser(null);
         setFormData({ username: '', password: '', email: '' });
+        setSuccess(`User "${data.user.username}" updated successfully!`);
+        setTimeout(() => setSuccess(''), 5000);
       } else {
         setError(data.error || 'Failed to update user');
       }
@@ -101,6 +108,9 @@ export default function UserManagement() {
       return;
     }
 
+    setError('');
+    setSuccess('');
+
     try {
       const response = await fetch(`${API_URL}/api/users/${username}`, {
         method: 'DELETE',
@@ -108,7 +118,9 @@ export default function UserManagement() {
       });
 
       if (response.ok) {
-        setUsers(users.filter(u => u.username !== username));
+        await loadUsers();
+        setSuccess(`User "${username}" deleted successfully!`);
+        setTimeout(() => setSuccess(''), 5000);
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to delete user');
@@ -164,6 +176,13 @@ export default function UserManagement() {
           Add User
         </button>
       </div>
+
+      {success && (
+        <div className="mb-4 bg-green-900/30 border border-green-700 rounded-lg p-3 flex items-center gap-2">
+          <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+          <p className="text-green-200 text-sm">{success}</p>
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 bg-red-900/30 border border-red-700 rounded-lg p-3 flex items-center gap-2">
